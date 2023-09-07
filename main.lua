@@ -1,59 +1,94 @@
-io.stdout:setvbuf('no')
+-- Débogueur Visual Studio Code tomblind.local-lua-debugger-vscode
+if pcall(require, "lldebugger") then
+  require("lldebugger").start()
+end
 
-Tank = {}
-Tank.x = 0
-Tank.y = 0
-Tank.speed = 70
-Tank.rotation = math.rad(90)
-Tank.img = love.graphics.newImage("images/tank.png")
-Tank.imgW = Tank.img:getWidth()
-Tank.imgH = Tank.img:getHeight()
+io.stdout:setvbuf('no') --Debug
+love.graphics.setDefaultFilter("nearest") --No blurry pixel
 
-Mouse = {}
-Mouse.x = 0
-Mouse.y = 0
-Mouse.img = love.graphics.newImage("images/pointer.png")
+local Tank = {
+  x = 0,
+  y = 0,
+  rotation = math.rad(-90),
+  speed = 50,
+  img = love.graphics.newImage("images/tank.png")
+}
+
+local Mouse = {
+  x = 0,
+  y = 0,
+  img = love.graphics.newImage("images/pointer.png")
+}
+
+local Cannon = {
+  x = 0,
+  y = 0,
+  img = love.graphics.newImage("images/cannon.png")
+}
+
+local projectiles = {}
+  projectiles.img = love.graphics.newImage("images/projectile.png")
+  projectiles.speed = 100
 
 function Input(dt)
-  if love.keyboard.isDown("up") or love.keyboard.isDown("z") then
-    Tank.y = Tank.y - Tank.speed * dt
-  end
-  if love.keyboard.isDown("down") or love.keyboard.isDown("s") then
-    Tank.y = Tank.y + Tank.speed * dt
+  if love.keyboard.isDown("up") or love.keyboard.isDown("z") then    
+    local vx = Tank.speed * math.cos(Tank.rotation) * dt
+    local vy = Tank.speed * math.sin(Tank.rotation) * dt
+    Tank.x = Tank.x  + vx
+    Tank.y = Tank.y  + vy
   end
   if love.keyboard.isDown("right") or love.keyboard.isDown("d") then
-    Tank.x = Tank.x + Tank.speed * dt
+    Tank.rotation = Tank.rotation + 1 * dt
   end
   if love.keyboard.isDown("left") or love.keyboard.isDown("q") then
-    Tank.x = Tank.x - Tank.speed * dt
-  end
-  if love.keyboard.isDown("space") then
-    print("Bang !")
-  end
-  if love.keyboard.isDown("kp+") then
-    Tank.speed = Tank.speed + 10
-  end
-  if love.keyboard.isDown("kp-") and Tank.speed > 0 then
-    Tank.speed = Tank.speed - 10
+    Tank.rotation = Tank.rotation - 1 * dt
   end
 end
 
-function canonRotation()
-  return math.atan2(Tank.x - Tank.y, love.mouse.getX() - love.mouse.getY())
+function Shoot(px, py, prot)
+  local projectile = {}
+  projectile.x = px
+  projectile.y = py
+  projectile.rotation = prot
+  table.insert(projectiles, projectile)
 end
+
+function love.keypressed(key)
+  if key == "space" then
+    Shoot(Tank.x, Tank.y, Tank.rotation)
+  end
+end
+
 function love.load()
-
+  Tank.x = love.graphics.getWidth()/2
+  Tank.y = love.graphics.getHeight()/2
 end
+
 function love.update(dt)
   Input(dt)
-  --canonRotation()
+  
+  for n=#projectiles,1,-1 do 
+    local b = projectiles[n]
+    b.x = b.x + (dt * projectiles.speed) * math.cos(math.rad(b.rotation))
+    b.y = b.y + (dt * projectiles.speed) * math.cos(math.rad(b.rotation))
+  end
+
   Mouse.x = love.mouse.getX()
   Mouse.y = love.mouse.getY()
+  
+  pointRadians = math.atan2(Cannon.y - Mouse.y, Cannon.x - Mouse.x)
 end
+
 function love.draw()
-  love.graphics.draw(Tank.img, Tank.x, Tank.y, Tank.rotation, 1, 1, Tank.imgW/2, Tank.imgH/2)
-  love.graphics.draw(Mouse.img, Mouse.x, Mouse.y, 0, 1, 1, Tank.imgW/2, Tank.imgH/2)
+  love.graphics.draw(Tank.img, Tank.x, Tank.y, Tank.rotation, 1, 1,Tank.img:getWidth()/2, Tank.img:getHeight()/2)
+  love.graphics.draw(Mouse.img, Mouse.x, Mouse.y, 0, 1, 1, Mouse.img:getWidth()/2, Mouse.img:getHeight()/2)
+  love.graphics.draw(Cannon.img, Tank.x, Tank.y, pointRadians, 1, 1,Cannon.img:getWidth()/2, Cannon.img:getHeight())
+  for bullet=1, #projectiles do
+    local bullet = projectiles[bullet]
+    love.graphics.draw(projectiles.img, bullet.x, bullet.y, bullet.rotation)
+  end
+  --love.graphics.draw(Projectile.img, Projectile.x, Projectile.y-5, Projectile.rotation, 1, 1,Projectile.img:getWidth()/2, Projectile.img:getHeight()/2)
   --Debug
   love.graphics.line(Tank.x, Tank.y, Mouse.x, Mouse.y)
-  love.graphics.print("Tank speed :"..Tank.speed.."(Increase/Decrease + -)")
+  love.graphics.print("Tank Angle: "..Tank.rotation.." Tank speed: "..Tank.speed)
 end
