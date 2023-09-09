@@ -28,7 +28,7 @@ local Cannon = {
 
 local projectiles = {}
   projectiles.img = love.graphics.newImage("images/projectile.png")
-  projectiles.speed = 100
+  projectiles.speed = 250
 
 function Input(dt)
   if love.keyboard.isDown("up") or love.keyboard.isDown("z") then    
@@ -66,11 +66,11 @@ end
 
 function love.update(dt)
   Input(dt)
-  
+
   for n=#projectiles,1,-1 do 
     local b = projectiles[n]
-    b.x = b.x + (dt * projectiles.speed) * math.cos(math.rad(b.rotation))
-    b.y = b.y + (dt * projectiles.speed) * math.cos(math.rad(b.rotation))
+    b.x = b.x + dt * projectiles.speed * math.cos(b.rotation)
+    b.y = b.y + dt * projectiles.speed * math.sin(b.rotation)
   end
 
   Mouse.x = love.mouse.getX()
@@ -83,11 +83,10 @@ function love.draw()
   love.graphics.draw(Tank.img, Tank.x, Tank.y, Tank.rotation, 1, 1,Tank.img:getWidth()/2, Tank.img:getHeight()/2)
   love.graphics.draw(Mouse.img, Mouse.x, Mouse.y, 0, 1, 1, Mouse.img:getWidth()/2, Mouse.img:getHeight()/2)
   love.graphics.draw(Cannon.img, Tank.x, Tank.y, pointRadians, 1, 1,Cannon.img:getWidth()/2, Cannon.img:getHeight())
-  for bullet=1, #projectiles do
+  for bullet=#projectiles,1,-1 do
     local bullet = projectiles[bullet]
     love.graphics.draw(projectiles.img, bullet.x, bullet.y, bullet.rotation)
   end
-  --love.graphics.draw(Projectile.img, Projectile.x, Projectile.y-5, Projectile.rotation, 1, 1,Projectile.img:getWidth()/2, Projectile.img:getHeight()/2)
   --Debug
   love.graphics.line(Tank.x, Tank.y, Mouse.x, Mouse.y)
   love.graphics.print("Tank Angle: "..Tank.rotation.." Tank speed: "..Tank.speed)
